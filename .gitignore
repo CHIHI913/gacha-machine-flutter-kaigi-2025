@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Environment variables
+.env
+
 # Test screenshots (generated on test failures)
 **/__screenshots__/
 

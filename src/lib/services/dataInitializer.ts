@@ -1,6 +1,10 @@
 import { prizesStore } from '../stores/prizes.svelte';
+import { errorStore } from '../stores/error.svelte';
 import { StorageService } from './storage';
+import { PrizeService } from './prizeService';
+import { config } from '../config';
 import type { Prize } from '../types';
+import { GoogleSheetsError } from '../errors/googleSheetsError';
 
 /**
  * データ初期化サービス
@@ -8,39 +12,36 @@ import type { Prize } from '../types';
  */
 export class DataInitializer {
   private storageService: StorageService<Prize[]>;
+  private prizeService: PrizeService;
 
   constructor() {
     this.storageService = new StorageService<Prize[]>('prizes');
+    this.prizeService = new PrizeService();
   }
 
   /**
    * アプリケーション起動時のデータ初期化
-   * LocalStorageから景品データを読み込み、整合性をチェックする
+   * LocalStorageまたはGoogle Sheetsから景品データを読み込み、整合性をチェックする
    */
-  initialize(): void {
+  async initialize(): Promise<void> {
     try {
-      // LocalStorageからデータを読み込む
-      const savedPrizes = this.storageService.get();
+      // PrizeServiceを使用してデータを読み込む
+      await this.prizeService.loadPrizes();
 
-      if (!savedPrizes) {
-        // データが存在しない場合、空配列で初期化
-        prizesStore.setPrizes([]);
-        return;
-      }
-
-      // データ整合性チェック
-      if (!this.checkDataIntegrity(savedPrizes)) {
+      // 読み込まれたデータの整合性チェック
+      const loadedPrizes = prizesStore.prizes;
+      if (loadedPrizes.length > 0 && !this.checkDataIntegrity(loadedPrizes)) {
         console.error('Data integrity check failed. Initializing with empty data.');
         this.clearData();
-        return;
       }
-
-      // データを復元
-      prizesStore.setPrizes(savedPrizes);
     } catch (error) {
       console.error('Failed to initialize data:', error);
-      // エラーが発生した場合、空配列で初期化
+
       prizesStore.setPrizes([]);
+
+      const { message, details } = this.buildErrorPayload(error);
+
+      errorStore.setError('データ読み込みエラー', message, details);
     }
   }
 
@@ -98,6 +99,104 @@ export class DataInitializer {
       prizesStore.setPrizes([]);
     } catch (error) {
       console.error('Failed to clear data:', error);
+    }
+  }
+
+  private buildErrorPayload(error: unknown): { message: string; details: string } {
+    const dataSource = config.isGoogleSheetsEnabled ? 'Googleスプレッドシート' : 'ローカルストレージ';
+
+    if (!config.isGoogleSheetsEnabled) {
+      const message = `${dataSource}からデータを読み込めませんでした。`;
+      const detailMessage = error instanceof Error ? error.message : String(error);
+      return {
+        message,
+        details: [
+          `内部メッセージ: ${detailMessage}`,
+          `データソース: ${dataSource}`,
+          `タイムスタンプ: ${new Date().toLocaleString()}`,
+        ].join('\n'),
+      };
+    }
+
+    return {
+      message: this.buildUserFacingMessage(error),
+      details: this.buildErrorDetails(error),
+    };
+  }
+
+  private buildUserFacingMessage(error: unknown): string {
+    if (!(error instanceof GoogleSheetsError)) {
+      return 'Googleスプレッドシートからデータを取得できませんでした。詳細は「詳細」をご確認ください。';
+    }
+
+    switch (error.category) {
+      case 'network':
+        return 'ネットワークまたはCORSの問題でGoogleスプレッドシートに接続できません。ブラウザの開発者ツールでリクエストがブロックされていないか確認してください。';
+      case 'unauthorized':
+        return '認証が必要です。ブラウザで会社のGoogleアカウントにログインしてから再読み込みしてください。';
+      case 'forbidden':
+        return 'Apps Scriptの公開設定でアクセスが拒否されています。「会社の全員」または「全員」に再デプロイしてください。';
+      case 'not_found':
+        return 'Apps ScriptのURLまたはシート名が見つかりません。`.env`に最新のURLが設定されているか確認してください。';
+      case 'rate_limit':
+        return 'Apps Scriptの実行回数制限に達しました。数分待ってから再度お試しください。';
+      case 'server':
+        return 'Google側で一時的な障害が発生しています。時間を置いて再試行するかApps Scriptログを確認してください。';
+      case 'script':
+        return 'Apps Script内部で例外が発生しました。`Code.gs`とログを確認してください。';
+      default:
+        return 'Googleスプレッドシートからデータを取得できませんでした。詳細は「詳細」をご確認ください。';
+    }
+  }
+
+  private buildErrorDetails(error: unknown): string {
+    const lines: string[] = [];
+
+    if (error instanceof GoogleSheetsError) {
+      lines.push(`内部メッセージ: ${error.message}`);
+      lines.push(`検出された原因カテゴリ: ${this.describeCategory(error.category)}`);
+      if (error.status) {
+        const statusText = error.statusText ? ` ${error.statusText}` : '';
+        lines.push(`HTTPステータス: ${error.status}${statusText}`);
+      }
+      if (error.details) {
+        lines.push(`Apps Script詳細: ${error.details}`);
+      }
+    } else if (error instanceof Error) {
+      lines.push(`内部メッセージ: ${error.message}`);
+    } else if (error) {
+      lines.push(`内部メッセージ: ${String(error)}`);
+    }
+
+    lines.push(`データソース: Googleスプレッドシート`);
+    lines.push(`API URL: ${config.googleSheetsApiUrl || '(未設定)'}`);
+    lines.push(`タイムスタンプ: ${new Date().toLocaleString()}`);
+    lines.push('チェックポイント:');
+    lines.push('- Apps Scriptの最新デプロイURLを `.env` に設定したか');
+    lines.push('- ブラウザで会社のGoogleアカウントにログインしているか');
+    lines.push('- ネットワーク/セキュリティソフトが `script.google.com` をブロックしていないか');
+
+    return lines.join('\n');
+  }
+
+  private describeCategory(category: GoogleSheetsError['category']): string {
+    switch (category) {
+      case 'network':
+        return 'ネットワーク/CORS問題';
+      case 'unauthorized':
+        return '認証エラー (401)';
+      case 'forbidden':
+        return '権限不足 (403)';
+      case 'not_found':
+        return 'URL/リソース未検出 (404)';
+      case 'rate_limit':
+        return '実行回数制限 (429)';
+      case 'server':
+        return 'Google側障害 (5xx)';
+      case 'script':
+        return 'Apps Script内部エラー';
+      default:
+        return '不明';
     }
   }
 }

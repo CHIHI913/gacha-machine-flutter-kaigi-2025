@@ -72,7 +72,9 @@
           </div>
           <div class="stat-item">
             <span class="stat-label">在庫</span>
-            <span class="stat-value">{displayInfo.prize.stock}個</span>
+            <span class="stat-value">
+              {displayInfo.prize.stock} / {displayInfo.prize.totalStock ?? displayInfo.prize.stock}個
+            </span>
           </div>
         </div>
 

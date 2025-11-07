@@ -1,5 +1,7 @@
 <script lang="ts">
   import { prizesStore } from '../stores/prizes.svelte';
+  import { dataSourceStore } from '../stores/dataSource.svelte';
+  import { config } from '../config';
   import { PrizeService } from '../services/prizeService';
   import PrizeStatsWidget from './PrizeStatsWidget.svelte';
   import PrizeListWidget from './PrizeListWidget.svelte';
@@ -18,6 +20,7 @@
     name: '',
     imageUrl: '',
     stock: 0,
+    totalStock: 0,
     description: '',
   });
 
@@ -25,6 +28,7 @@
   let errors = $state({
     name: '',
     stock: '',
+    totalStock: '',
     description: '',
   });
 
@@ -45,11 +49,13 @@
       name: '',
       imageUrl: '',
       stock: 0,
+      totalStock: 0,
       description: '',
     };
     errors = {
       name: '',
       stock: '',
+      totalStock: '',
       description: '',
     };
   }
@@ -62,11 +68,13 @@
       name: prize.name,
       imageUrl: prize.imageUrl,
       stock: prize.stock,
+      totalStock: prize.totalStock ?? prize.stock,
       description: prize.description || '',
     };
     errors = {
       name: '',
       stock: '',
+      totalStock: '',
       description: '',
     };
   }
@@ -79,11 +87,13 @@
       name: '',
       imageUrl: '',
       stock: 0,
+      totalStock: 0,
       description: '',
     };
     errors = {
       name: '',
       stock: '',
+      totalStock: '',
       description: '',
     };
   }
@@ -94,6 +104,7 @@
     errors = {
       name: '',
       stock: '',
+      totalStock: '',
       description: '',
     };
 
@@ -116,6 +127,20 @@
       isValid = false;
     }
 
+    if (formData.totalStock < 0) {
+      errors.totalStock = '仕入れ数は0以上の数値を入力してください';
+      isValid = false;
+    } else if (!Number.isInteger(formData.totalStock)) {
+      errors.totalStock = '仕入れ数は整数で入力してください';
+      isValid = false;
+    } else if (formData.totalStock > 9999) {
+      errors.totalStock = '仕入れ数は9999以下で入力してください';
+      isValid = false;
+    } else if (formData.stock > formData.totalStock) {
+      errors.totalStock = '仕入れ数は在庫数以上に設定してください';
+      isValid = false;
+    }
+
     if (formData.description.length > 500) {
       errors.description = '説明は500文字以内で入力してください';
       isValid = false;
@@ -125,33 +150,40 @@
   }
 
   // 保存
-  function save() {
+  async function save() {
     if (!validate()) {
       return;
     }
 
-    if (editingPrizeId) {
-      // 更新
-      const updateRequest: UpdatePrizeRequest = {
-        id: editingPrizeId,
-        name: formData.name,
-        imageUrl: formData.imageUrl,
-        stock: formData.stock,
-        description: formData.description.trim() || undefined,
-      };
-      prizeService.updatePrize(updateRequest);
-    } else {
-      // 追加
-      const addRequest: AddPrizeRequest = {
-        name: formData.name,
-        imageUrl: formData.imageUrl,
-        stock: formData.stock,
-        description: formData.description.trim() || undefined,
-      };
-      prizeService.addPrize(addRequest);
-    }
+    try {
+      if (editingPrizeId) {
+        // 更新
+        const updateRequest: UpdatePrizeRequest = {
+          id: editingPrizeId,
+          name: formData.name,
+          imageUrl: formData.imageUrl,
+          stock: formData.stock,
+          totalStock: formData.totalStock,
+          description: formData.description.trim() || undefined,
+        };
+        await prizeService.updatePrize(updateRequest);
+      } else {
+        // 追加
+        const addRequest: AddPrizeRequest = {
+          name: formData.name,
+          imageUrl: formData.imageUrl,
+          stock: formData.stock,
+          totalStock: formData.totalStock,
+          description: formData.description.trim() || undefined,
+        };
+        await prizeService.addPrize(addRequest);
+      }
 
-    closeForm();
+      closeForm();
+    } catch (error) {
+      console.error('Failed to save prize:', error);
+      alert('景品の保存に失敗しました。もう一度お試しください。');
+    }
   }
 
   // 削除確認ダイアログを開く
@@ -167,11 +199,24 @@
   }
 
   // 削除実行
-  function confirmDelete() {
+  async function confirmDelete() {
     if (deletingPrizeId) {
-      prizeService.deletePrize(deletingPrizeId);
+      try {
+        await prizeService.deletePrize(deletingPrizeId);
+        closeDeleteConfirm();
+      } catch (error) {
+        console.error('Failed to delete prize:', error);
+        alert('景品の削除に失敗しました。もう一度お試しください。');
+      }
     }
-    closeDeleteConfirm();
+  }
+
+  // データソース切り替え
+  function toggleDataSource() {
+    const newSource = dataSourceStore.dataSource === 'local' ? 'sheets' : 'local';
+    dataSourceStore.setDataSource(newSource);
+    // ページをリロードして新しいデータソースからデータを読み込む
+    window.location.reload();
   }
 </script>
 
@@ -193,6 +238,32 @@
     <!-- 景品統計情報 -->
     <div class="stats-section">
       <PrizeStatsWidget />
+    </div>
+
+    <!-- データソース設定 -->
+    <div class="data-source-section">
+      <div class="data-source-container">
+        <div class="data-source-info">
+          <h3>データソース</h3>
+          <p class="data-source-description">
+            {dataSourceStore.dataSource === 'local'
+              ? 'ローカルストレージ（このブラウザのみ）'
+              : 'Googleスプレッドシート（複数デバイスで共有）'}
+          </p>
+        </div>
+        <button
+          class="toggle-button"
+          onclick={toggleDataSource}
+          data-testid="data-source-toggle"
+        >
+          <span class="toggle-track" class:active={dataSourceStore.dataSource === 'sheets'}>
+            <span class="toggle-thumb"></span>
+          </span>
+          <span class="toggle-label">
+            {dataSourceStore.dataSource === 'sheets' ? 'スプレッドシート' : 'ローカル'}
+          </span>
+        </button>
+      </div>
     </div>
 
     <!-- 景品追加ボタン -->
@@ -219,7 +290,7 @@
               <img src={prize.imageUrl} alt={prize.name} class="prize-image" />
               <div class="prize-details">
                 <h3>{prize.name}</h3>
-                <p>在庫: {prize.stock}</p>
+                <p>在庫: {prize.stock} / {prize.totalStock ?? prize.stock}</p>
               </div>
             </div>
             <div class="prize-actions">
@@ -281,6 +352,19 @@
             />
             {#if errors.stock}
               <p class="error-message">{errors.stock}</p>
+            {/if}
+          </div>
+
+          <div class="form-group">
+            <label for="totalStock">仕入れ総数（分母） *</label>
+            <input
+              type="number"
+              id="totalStock"
+              bind:value={formData.totalStock}
+            />
+            <p class="helper-text">ガチャ開始時点の総数。残数が分母を超えないよう自動で調整されます。</p>
+            {#if errors.totalStock}
+              <p class="error-message">{errors.totalStock}</p>
             {/if}
           </div>
 
@@ -367,6 +451,79 @@
 
   .stats-section {
     margin-bottom: 2rem;
+  }
+
+  .data-source-section {
+    margin-bottom: 2rem;
+  }
+
+  .data-source-container {
+    background-color: var(--color-bg-white);
+    border: 1px solid var(--color-border-low);
+    border-radius: 8px;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .data-source-info h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--color-text-high);
+  }
+
+  .data-source-description {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--color-text-middle);
+  }
+
+  .toggle-button {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-high);
+  }
+
+  .toggle-track {
+    position: relative;
+    width: 48px;
+    height: 24px;
+    background-color: var(--color-bg-middle);
+    border-radius: 12px;
+    transition: background-color 0.2s;
+  }
+
+  .toggle-track.active {
+    background-color: var(--color-brand-assign-red);
+  }
+
+  .toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background-color: var(--color-bg-white);
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+
+  .toggle-track.active .toggle-thumb {
+    transform: translateX(24px);
+  }
+
+  .toggle-label {
+    min-width: 100px;
   }
 
   h1 {
@@ -548,6 +705,12 @@
     font-size: 0.75rem;
     color: var(--color-text-middle);
     text-align: right;
+  }
+
+  .helper-text {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--color-text-middle);
   }
 
   .error-message {

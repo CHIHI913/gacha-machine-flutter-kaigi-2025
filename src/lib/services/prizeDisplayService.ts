@@ -77,13 +77,16 @@ export class PrizeDisplayService {
     const totalCount = prizes.length;
     const availableCount = prizes.filter((p) => p.stock > 0).length;
     const outOfStockCount = prizes.filter((p) => p.stock === 0).length;
-    const totalStock = prizes.reduce((sum, p) => sum + p.stock, 0);
+    const remainingStock = prizes.reduce((sum, p) => sum + p.stock, 0);
+    const totalStockCapacity = prizes.reduce((sum, p) => sum + (p.totalStock ?? p.stock), 0);
 
     return {
       totalCount,
       availableCount,
       outOfStockCount,
-      totalStock,
+      remainingStock,
+      totalStockCapacity,
+      totalStock: remainingStock,
     };
   }
 

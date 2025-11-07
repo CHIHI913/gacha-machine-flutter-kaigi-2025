@@ -65,7 +65,12 @@
     audioPlayer.playSE('result');
 
     // 5. 在庫を減らす
-    prizeService.decrementStock(drawnPrize.id);
+    try {
+      await prizeService.decrementStock(drawnPrize.id);
+    } catch (error) {
+      console.error('Failed to decrement stock:', error);
+      // エラーが発生してもUI上は続行（在庫は楽観的に更新済み）
+    }
   }
 
   // 結果画面を閉じる
@@ -97,7 +102,7 @@
       data-testid="settings-button"
       onclick={navigateToSettings}
     >
-      ⚙️ 設定
+      ⚙️
     </button>
   </header>
 
@@ -204,8 +209,6 @@
 
   .header {
     padding: 1rem;
-    background-color: var(--color-bg-white);
-    border-bottom: 1px solid var(--color-border-low);
     display: flex;
     justify-content: flex-end;
   }

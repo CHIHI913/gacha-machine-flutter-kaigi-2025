@@ -1,17 +1,26 @@
 import { nanoid } from 'nanoid';
 import { prizesStore } from '../stores/prizes.svelte';
 import { StorageService } from './storage';
+import { GoogleSheetsService } from './googleSheetsService';
+import { config } from '../config';
 import type { Prize, AddPrizeRequest, UpdatePrizeRequest } from '../types';
 
 /**
  * 景品管理サービス
  * 景品のCRUD操作とビジネスロジックを提供
+ * LocalStorageまたはGoogle Sheetsをバックエンドとして使用
  */
 export class PrizeService {
   private storage: StorageService<Prize[]>;
+  private sheetsService: GoogleSheetsService | null = null;
 
   constructor() {
     this.storage = new StorageService<Prize[]>('prizes');
+
+    // Google Sheetsが有効な場合はサービスを初期化
+    if (config.isGoogleSheetsEnabled) {
+      this.sheetsService = new GoogleSheetsService(config.googleSheetsApiUrl);
+    }
   }
 
   /**
@@ -27,21 +36,39 @@ export class PrizeService {
    * @param request 追加する景品の情報
    * @returns 追加された景品(IDとcreatedAtが設定済み)
    */
-  addPrize(request: AddPrizeRequest): Prize {
-    const newPrize: Prize = {
+  async addPrize(request: AddPrizeRequest): Promise<Prize> {
+    const totalStock = request.totalStock ?? request.stock;
+    const normalizedStock = Math.min(request.stock, totalStock);
+
+    const newPrize: Prize = this.normalizePrize({
       id: nanoid(),
       name: request.name,
       imageUrl: request.imageUrl,
-      stock: request.stock,
+      stock: normalizedStock,
+      totalStock,
       createdAt: Date.now(),
       ...(request.description !== undefined && { description: request.description }),
-    };
+    });
 
     const currentPrizes = prizesStore.prizes;
     const updatedPrizes = [...currentPrizes, newPrize];
 
+    // ストアを即座に更新（UIの即時反映）
     prizesStore.setPrizes(updatedPrizes);
-    this.savePrizes(updatedPrizes);
+
+    // バックエンドに保存
+    if (config.isGoogleSheetsEnabled) {
+      try {
+        await this.sheetsService!.addPrize(newPrize);
+      } catch (error) {
+        console.error('Failed to add prize to Google Sheets:', error);
+        prizesStore.setPrizes(currentPrizes); // 元に戻す
+        throw error;
+      }
+    } else {
+      // LocalStorageのみの場合
+      this.savePrizes(updatedPrizes);
+    }
 
     return newPrize;
   }
@@ -51,7 +78,7 @@ export class PrizeService {
    * @param request 更新する景品の情報(部分更新対応)
    * @throws {Error} 景品が見つからない場合
    */
-  updatePrize(request: UpdatePrizeRequest): void {
+  async updatePrize(request: UpdatePrizeRequest): Promise<void> {
     const currentPrizes = prizesStore.prizes;
     const targetIndex = currentPrizes.findIndex((p) => p.id === request.id);
 
@@ -59,19 +86,38 @@ export class PrizeService {
       throw new Error('指定された景品が見つかりません');
     }
 
-    const updatedPrize: Prize = {
-      ...currentPrizes[targetIndex],
+    const target = currentPrizes[targetIndex];
+    const nextTotalStock = request.totalStock ?? target.totalStock ?? target.stock;
+    const requestedStock = request.stock ?? target.stock;
+    const clampedStock = Math.min(requestedStock, nextTotalStock);
+
+    const updatedPrize: Prize = this.normalizePrize({
+      ...target,
       ...(request.name !== undefined && { name: request.name }),
       ...(request.imageUrl !== undefined && { imageUrl: request.imageUrl }),
-      ...(request.stock !== undefined && { stock: request.stock }),
+      stock: clampedStock,
+      totalStock: nextTotalStock,
       ...(request.description !== undefined && { description: request.description }),
-    };
+    });
 
     const updatedPrizes = [...currentPrizes];
     updatedPrizes[targetIndex] = updatedPrize;
 
+    // ストアを即座に更新
     prizesStore.setPrizes(updatedPrizes);
-    this.savePrizes(updatedPrizes);
+
+    // バックエンドに保存
+    if (config.isGoogleSheetsEnabled) {
+      try {
+        await this.sheetsService!.updatePrize(request);
+      } catch (error) {
+        console.error('Failed to update prize in Google Sheets:', error);
+        prizesStore.setPrizes(currentPrizes);
+        throw error;
+      }
+    } else {
+      this.savePrizes(updatedPrizes);
+    }
   }
 
   /**
@@ -79,7 +125,7 @@ export class PrizeService {
    * @param id 削除する景品のID
    * @throws {Error} 景品が見つからない場合
    */
-  deletePrize(id: string): void {
+  async deletePrize(id: string): Promise<void> {
     const currentPrizes = prizesStore.prizes;
     const targetIndex = currentPrizes.findIndex((p) => p.id === id);
 
@@ -89,17 +135,48 @@ export class PrizeService {
 
     const updatedPrizes = currentPrizes.filter((p) => p.id !== id);
 
+    // ストアを即座に更新
     prizesStore.setPrizes(updatedPrizes);
-    this.savePrizes(updatedPrizes);
+
+    // バックエンドに保存
+    if (config.isGoogleSheetsEnabled) {
+      try {
+        await this.sheetsService!.deletePrize(id);
+      } catch (error) {
+        console.error('Failed to delete prize from Google Sheets:', error);
+        prizesStore.setPrizes(currentPrizes);
+        throw error;
+      }
+    } else {
+      this.savePrizes(updatedPrizes);
+    }
   }
 
   /**
-   * LocalStorageから景品データを読み込む
+   * 景品データを読み込む
+   * Google Sheets有効時はスプレッドシートから、それ以外はLocalStorageから
    */
-  loadPrizes(): void {
+  async loadPrizes(): Promise<void> {
+    // Google Sheetsから読み込み
+    if (config.isGoogleSheetsEnabled) {
+      try {
+        const prizes = await this.sheetsService!.getPrizes();
+        prizesStore.setPrizes(prizes.map((p) => this.normalizePrize(p)));
+        return;
+      } catch (error) {
+        console.error('Failed to load prizes from Google Sheets:', error);
+        prizesStore.setPrizes([]);
+        if (error instanceof Error) {
+          throw error;
+        }
+        throw new Error(String(error));
+      }
+    }
+
+    // LocalStorageから読み込み
     const storedPrizes = this.storage.get();
     if (storedPrizes) {
-      prizesStore.setPrizes(storedPrizes);
+      prizesStore.setPrizes(storedPrizes.map((p) => this.normalizePrize(p)));
     } else {
       prizesStore.setPrizes([]);
     }
@@ -126,7 +203,7 @@ export class PrizeService {
    * @param id 景品のID
    * @throws {Error} 景品が見つからない場合
    */
-  decrementStock(id: string): void {
+  async decrementStock(id: string): Promise<void> {
     const currentPrizes = prizesStore.prizes;
     const targetIndex = currentPrizes.findIndex((p) => p.id === id);
 
@@ -145,8 +222,21 @@ export class PrizeService {
     const updatedPrizes = [...currentPrizes];
     updatedPrizes[targetIndex] = updatedPrize;
 
+    // ストアを即座に更新
     prizesStore.setPrizes(updatedPrizes);
-    this.savePrizes(updatedPrizes);
+
+    // バックエンドに保存
+    if (config.isGoogleSheetsEnabled) {
+      try {
+        await this.sheetsService!.decrementStock(id);
+      } catch (error) {
+        console.error('Failed to decrement stock in Google Sheets:', error);
+        prizesStore.setPrizes(currentPrizes);
+        throw error;
+      }
+    } else {
+      this.savePrizes(updatedPrizes);
+    }
   }
 
   /**
@@ -155,6 +245,20 @@ export class PrizeService {
    * @private
    */
   private savePrizes(prizes: Prize[]): void {
-    this.storage.set(prizes);
+    this.storage.set(prizes.map((p) => this.normalizePrize(p)));
+  }
+
+  /**
+   * totalStockが未設定の場合に補完し、在庫を分母以内に収める
+   */
+  private normalizePrize(prize: Prize): Prize {
+    const totalStock = prize.totalStock ?? prize.stock;
+    const stock = Math.min(prize.stock, totalStock);
+
+    return {
+      ...prize,
+      stock,
+      totalStock,
+    };
   }
 }

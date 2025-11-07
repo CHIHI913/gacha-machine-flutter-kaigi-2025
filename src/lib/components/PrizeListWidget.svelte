@@ -70,7 +70,9 @@
 
           <div class="prize-info">
             <span class="probability">{info.probability}%</span>
-            <span class="stock">残り{info.prize.stock}個</span>
+            <span class="stock">
+              残り{info.prize.stock} / {info.prize.totalStock ?? info.prize.stock}個
+            </span>
             {#if info.isLowStock && info.prize.stock > 0}
               <span class="low-stock-warning">残りわずか</span>
             {/if}

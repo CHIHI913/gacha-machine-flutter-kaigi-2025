@@ -18,6 +18,9 @@ export interface Prize {
   /** 在庫数（0以上の整数） */
   stock: number;
 
+  /** 仕入れ総数（分母） */
+  totalStock?: number;
+
   /** 作成日時（UNIXタイムスタンプ） */
   createdAt: number;
 
@@ -47,6 +50,7 @@ export interface AddPrizeRequest {
   name: string;
   imageUrl: string;
   stock: number;
+  totalStock?: number;
   description?: string;
 }
 
@@ -58,6 +62,7 @@ export interface UpdatePrizeRequest {
   name?: string;
   imageUrl?: string;
   stock?: number;
+  totalStock?: number;
   description?: string;
 }
 
@@ -112,6 +117,12 @@ export interface PrizeStats {
   /** 在庫切れ景品数 */
   outOfStockCount: number;
 
-  /** 総在庫数 */
-  totalStock: number;
+  /** 総在庫数（残） */
+  remainingStock: number;
+
+  /** 仕入れ総数 */
+  totalStockCapacity: number;
+
+  /** @deprecated 互換用: remainingStock と同値 */
+  totalStock?: number;
 }

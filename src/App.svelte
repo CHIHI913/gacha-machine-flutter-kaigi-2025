@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import GachaScreen from './lib/components/GachaScreen.svelte';
   import SettingsScreen from './lib/components/SettingsScreen.svelte';
+  import ErrorModal from './lib/components/ErrorModal.svelte';
   import { DataInitializer } from './lib/services/dataInitializer';
   import type { Screen } from './lib/types';
 
@@ -14,9 +15,9 @@
   }
 
   // アプリケーション起動時にデータを初期化
-  onMount(() => {
+  onMount(async () => {
     const dataInitializer = new DataInitializer();
-    dataInitializer.initialize();
+    await dataInitializer.initialize();
   });
 </script>
 
@@ -26,6 +27,9 @@
   {:else if currentScreen === 'settings'}
     <SettingsScreen onnavigate={handleNavigate} />
   {/if}
+
+  <!-- エラーモーダル -->
+  <ErrorModal />
 </div>
 
 <style>

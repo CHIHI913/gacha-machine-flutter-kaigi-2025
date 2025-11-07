@@ -36,8 +36,14 @@
     </div>
 
     <div class="stat-card">
-      <div class="stat-label">総在庫</div>
-      <div class="stat-value">{stats.totalStock}</div>
+      <div class="stat-label">残り在庫</div>
+      <div class="stat-value">{stats.remainingStock}</div>
+      <div class="stat-unit">個</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-label">仕入れ総数</div>
+      <div class="stat-value">{stats.totalStockCapacity}</div>
       <div class="stat-unit">個</div>
     </div>
   </div>
