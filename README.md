@@ -108,6 +108,15 @@ server/
 npm test
 ```
 
+## GitHub Pages へのデプロイ
+
+リポジトリ `CHIHI913/gacha-machine-flutter-kaigi-2025` の GitHub Pages でホストできます。
+
+1. **Viteのベースパス**: `vite.config.ts` で `base: '/gacha-machine-flutter-kaigi-2025/'` が指定されています。別リポジトリ名で公開する場合は書き換えてください。
+2. **環境変数**: `.env.production.example` を参考に、Apps Script の `/exec` URL を GitHub Secrets `VITE_GOOGLE_SHEETS_API_URL` に登録します。
+3. **デプロイフロー**: `.github/workflows/deploy.yml` が `main` ブランチの push をトリガーに `npm run build` → `gh-pages` ブランチへ自動デプロイします。Settings → Pages で `Source: Deploy from a branch / gh-pages` を指定してください。
+4. 公開URL: `https://CHIHI913.github.io/gacha-machine-flutter-kaigi-2025/`
+
 ## Recommended IDE Setup
 
 [VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
