@@ -253,7 +253,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 3rem;
+    gap: 2rem;
     width: 100%;
     max-width: 1200px;
   }
@@ -279,8 +279,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--color-bg-white, #ffffff);
-    border: 3px solid rgba(255, 255, 255, 0.8);
+    background-color: transparent;
   }
 
   .gacha-hero-heading {
