@@ -114,6 +114,7 @@
       <div class="idle-container">
         <!-- メインビジュアル -->
         <h2 class="gacha-hero-heading">ASSIGNノベルティが必ず当たる！</h2>
+
         <div class="gacha-visual">
           <img
             class="gacha-hero-image"
@@ -286,7 +287,7 @@
     font-size: 2.5rem;
     font-weight: 700;
     color: var(--color-text-high, #15151a);
-    margin: 0 0 0.75rem 0;
+    margin: 0;
     text-align: center;
   }
 
