@@ -301,7 +301,7 @@ function getNextOrderValue() {
       </button>
     </div>
 
-    <!-- 景品一覧 -->
+    <!-- 景品リスト -->
     {#if prizesStore.prizes.length === 0}
       <div class="empty-message">
         <p>景品が登録されていません</p>

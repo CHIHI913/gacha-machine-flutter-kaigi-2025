@@ -2,7 +2,6 @@
   import { prizesStore } from '../stores/prizes.svelte';
   import { FilterStore } from '../stores/filter.svelte';
   import { PrizeDisplayService } from '../services/prizeDisplayService';
-  import { RarityClassifier } from '../services/rarityClassifier';
 
   // Props
   interface Props {
@@ -15,7 +14,6 @@
 
   // Services
   const prizeDisplayService = new PrizeDisplayService();
-  const rarityClassifier = new RarityClassifier();
 
   // State
   let prizes = $derived(prizesStore.prizes);

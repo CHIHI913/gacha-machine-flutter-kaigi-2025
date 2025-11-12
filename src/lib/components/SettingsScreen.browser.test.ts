@@ -41,7 +41,7 @@ describe('SettingsScreen', () => {
     });
   });
 
-  describe('景品一覧表示', () => {
+  describe('景品リスト表示', () => {
     it('should show empty message when no prizes', () => {
       render(SettingsScreen);
 
@@ -63,7 +63,7 @@ describe('SettingsScreen', () => {
 
       render(SettingsScreen);
 
-      // 景品一覧が表示される
+      // 景品リストが表示される
       expect(screen.getByText('Test Prize 1')).toBeDefined();
       expect(screen.getByText('Test Prize 2')).toBeDefined();
     });
@@ -214,6 +214,10 @@ describe('SettingsScreen', () => {
 
       stockInput.value = '15';
       stockInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const totalStockInput = screen.getByLabelText(/仕入れ総数/) as HTMLInputElement;
+      totalStockInput.value = '20';
+      totalStockInput.dispatchEvent(new Event('input', { bubbles: true }));
 
       // 保存ボタンをクリック
       const saveButton = screen.getByText('保存');
@@ -372,6 +376,10 @@ describe('SettingsScreen', () => {
       const stockInput = screen.getByLabelText(/在庫数/) as HTMLInputElement;
       stockInput.value = '20';
       stockInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const totalStockInput = screen.getByLabelText(/仕入れ総数/) as HTMLInputElement;
+      totalStockInput.value = '25';
+      totalStockInput.dispatchEvent(new Event('input', { bubbles: true }));
 
       // 保存
       const saveButton = screen.getByText('保存');

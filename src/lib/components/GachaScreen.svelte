@@ -96,12 +96,13 @@
 </script>
 
 <div class="gacha-screen" data-testid="gacha-screen">
-  <!-- ヘッダー: 設定ボタン -->
+  <!-- 設定ボタン（絶対配置） -->
   <header class="header">
     <button
       class="settings-button"
       data-testid="settings-button"
       onclick={navigateToSettings}
+      aria-label="設定"
     >
       ⚙️
     </button>
@@ -137,9 +138,7 @@
           {/if}
         </div>
 
-        <!-- 景品一覧 -->
         <div class="prize-list-section">
-          <h2 class="prize-list-title">景品一覧</h2>
           <PrizeListWidget
             mode="compact"
             onPrizeClick={handlePrizeClick}
@@ -216,12 +215,14 @@
     flex-direction: column;
     min-height: 100vh;
     background-color: var(--color-bg-contents-area);
+    position: relative;
   }
 
   .header {
-    padding: 1rem;
-    display: flex;
-    justify-content: flex-end;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 10;
   }
 
   .settings-button {
@@ -288,14 +289,6 @@
     max-width: none;
     object-fit: cover;
     display: block;
-  }
-
-  .prize-list-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-high, #15151a);
-    margin: 0 0 1.5rem 0;
-    text-align: center;
   }
 
   .gacha-button {

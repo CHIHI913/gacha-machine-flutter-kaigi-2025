@@ -105,7 +105,7 @@ export interface PrizeDisplayInfo {
   /** レアリティレベル */
   rarity: RarityLevel;
 
-  /** 在庫が少ない(5個以下)かどうか */
+  /** 在庫が少ないかどうか（残数が分母の10%以下） */
   isLowStock: boolean;
 }
 

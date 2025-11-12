@@ -21,6 +21,7 @@ describe('PrizeDisplayService', () => {
           name: 'Prize A',
           imageUrl: '/a.png',
           stock: 5,
+          totalStock: 50,
           createdAt: Date.now(),
         },
         {
@@ -28,6 +29,7 @@ describe('PrizeDisplayService', () => {
           name: 'Prize B',
           imageUrl: '/b.png',
           stock: 5,
+          totalStock: 50,
           createdAt: Date.now(),
         },
       ];
@@ -39,7 +41,7 @@ describe('PrizeDisplayService', () => {
       expect(displayInfo.prize.id).toBe('1');
       expect(displayInfo.probability).toBe(50); // 5/10 * 100
       expect(displayInfo.rarity).toBe('Normal'); // 50% >= 10%
-      expect(displayInfo.isLowStock).toBe(true); // 5 <= 5
+      expect(displayInfo.isLowStock).toBe(true); // 5/50 = 10%
     });
 
     it('should classify as Rare when probability is between 3% and 10%', () => {
@@ -94,13 +96,14 @@ describe('PrizeDisplayService', () => {
       expect(displayInfo.rarity).toBe('SuperRare'); // 1% < 3%
     });
 
-    it('should mark isLowStock as false when stock > 5', () => {
+    it('should mark isLowStock as false when remaining stock ratio exceeds 10%', () => {
       const prizes: Prize[] = [
         {
           id: '1',
           name: 'Prize A',
           imageUrl: '/a.png',
           stock: 10,
+          totalStock: 50,
           createdAt: Date.now(),
         },
       ];

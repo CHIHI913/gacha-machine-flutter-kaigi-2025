@@ -81,34 +81,17 @@ describe('PrizeListWidget', () => {
       prizesStore.setPrizes(prizes);
       render(PrizeListWidget, { props: { mode: 'compact' } });
 
-      expect(screen.getByText(/残り5個/)).toBeTruthy();
+      expect(screen.getByText(/残り5\s*\/\s*5個/)).toBeTruthy();
     });
 
-    it('should display rarity icon for each prize', () => {
+    it('should show low stock warning when remaining stock is 10% or less of total', () => {
       const prizes: Prize[] = [
         {
           id: '1',
           name: 'Prize A',
           imageUrl: '/a.png',
-          stock: 50,
-          createdAt: Date.now(),
-        },
-      ];
-
-      prizesStore.setPrizes(prizes);
-      render(PrizeListWidget, { props: { mode: 'compact' } });
-
-      // 100% => Normal => ●
-      expect(screen.getByText('●')).toBeTruthy();
-    });
-
-    it('should show low stock warning when stock <= 5', () => {
-      const prizes: Prize[] = [
-        {
-          id: '1',
-          name: 'Prize A',
-          imageUrl: '/a.png',
-          stock: 3,
+          stock: 4,
+          totalStock: 40,
           createdAt: Date.now(),
         },
       ];
@@ -119,13 +102,14 @@ describe('PrizeListWidget', () => {
       expect(screen.getByText(/残りわずか/)).toBeTruthy();
     });
 
-    it('should not show low stock warning when stock > 5', () => {
+    it('should not show low stock warning when remaining stock exceeds 10% of total', () => {
       const prizes: Prize[] = [
         {
           id: '1',
           name: 'Prize A',
           imageUrl: '/a.png',
-          stock: 10,
+          stock: 15,
+          totalStock: 100,
           createdAt: Date.now(),
         },
       ];

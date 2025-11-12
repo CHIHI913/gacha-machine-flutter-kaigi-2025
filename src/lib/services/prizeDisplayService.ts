@@ -15,8 +15,8 @@ export class PrizeDisplayService {
   private prizeSorter: PrizeSorter;
   private prizeFilter: PrizeFilter;
 
-  // 在庫少ない閾値
-  private readonly LOW_STOCK_THRESHOLD = 5;
+  // 在庫少ない判定を行う在庫比率（10%）
+  private readonly LOW_STOCK_RATIO_THRESHOLD = 0.1;
 
   constructor() {
     this.probabilityCalculator = new ProbabilityCalculator();
@@ -46,8 +46,10 @@ export class PrizeDisplayService {
     // レアリティを分類
     const rarity = this.rarityClassifier.classify(probability);
 
-    // 在庫少ないかどうかを判定
-    const isLowStock = prize.stock <= this.LOW_STOCK_THRESHOLD;
+    // 在庫少ないかどうかを判定（在庫/仕入れ総数 <= 10%）
+    const denominator = prize.totalStock ?? prize.stock;
+    const ratio = denominator > 0 ? prize.stock / denominator : 1;
+    const isLowStock = prize.stock > 0 && ratio <= this.LOW_STOCK_RATIO_THRESHOLD;
 
     return {
       prize,
