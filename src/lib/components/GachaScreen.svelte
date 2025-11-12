@@ -5,6 +5,7 @@
   import { createSpinAnimation, createRevealAnimation } from '../services/animationEngine';
   import PrizeListWidget from './PrizeListWidget.svelte';
   import PrizeDetailModal from './PrizeDetailModal.svelte';
+  import gachaHeroImage from '../../assets/gacha/garagara.png';
   import type { GachaState, Prize } from '../types';
 
   // Props: イベントコールバック
@@ -110,6 +111,16 @@
   <main class="main-content">
     {#if gachaState === 'idle'}
       <div class="idle-container">
+        <!-- メインビジュアル -->
+        <div class="gacha-visual">
+          <img
+            class="gacha-hero-image"
+            src={gachaHeroImage}
+            alt="Flutter Kaigi 2025 ガチャマシンのビジュアル"
+            loading="lazy"
+          />
+        </div>
+
         <!-- ガチャボタン -->
         <div class="gacha-button-container">
           <button
@@ -255,6 +266,28 @@
   .prize-list-section {
     width: 100%;
     max-width: 800px;
+  }
+
+  .gacha-visual {
+    width: 100%;
+    max-width: 560px;
+    aspect-ratio: 16 / 9;
+    border-radius: 24px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-bg-white, #ffffff);
+    border: 3px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 20px 40px rgba(21, 21, 26, 0.15);
+  }
+
+  .gacha-hero-image {
+    height: 100%;
+    width: auto;
+    max-width: none;
+    object-fit: cover;
+    display: block;
   }
 
   .prize-list-title {
