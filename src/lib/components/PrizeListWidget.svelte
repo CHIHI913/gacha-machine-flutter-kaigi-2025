@@ -125,6 +125,7 @@
     overflow: hidden;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
   }
 
   .prize-item:hover {
@@ -133,7 +134,16 @@
   }
 
   .prize-item.out-of-stock {
-    opacity: 0.7;
+    cursor: not-allowed;
+    filter: grayscale(1);
+  }
+
+  .prize-item.out-of-stock::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(28, 30, 34, 0.45);
+    pointer-events: none;
   }
 
   .prize-name {
