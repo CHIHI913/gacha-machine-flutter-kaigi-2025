@@ -64,10 +64,16 @@
     // 4. 結果表示状態へ遷移
     gachaState = 'result';
     audioPlayer.playSE('result');
+    const drawTimestamp = Date.now();
 
     // 5. 在庫を減らす
     try {
-      await prizeService.decrementStock(drawnPrize.id);
+      const remainingStock = await prizeService.decrementStock(drawnPrize.id);
+      await prizeService.logGachaResult({
+        prizeName: drawnPrize.name,
+        drawnAt: drawTimestamp,
+        remainingStock,
+      });
     } catch (error) {
       console.error('Failed to decrement stock:', error);
       // エラーが発生してもUI上は続行（在庫は楽観的に更新済み）

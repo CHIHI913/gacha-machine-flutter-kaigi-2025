@@ -80,6 +80,20 @@ export interface GachaResult {
 }
 
 /**
+ * ガチャ結果ログ
+ */
+export interface GachaResultLogEntry {
+  /** 当選した景品名 */
+  prizeName: string;
+
+  /** ガチャを引いたタイムスタンプ（UNIXミリ秒） */
+  drawnAt: number;
+
+  /** 該当景品の残り個数 */
+  remainingStock: number;
+}
+
+/**
  * アニメーション設定
  */
 export interface AnimationConfig {

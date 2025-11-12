@@ -3,7 +3,7 @@ import { prizesStore } from '../stores/prizes.svelte';
 import { StorageService } from './storage';
 import { GoogleSheetsService } from './googleSheetsService';
 import { config } from '../config';
-import type { Prize, AddPrizeRequest, UpdatePrizeRequest } from '../types';
+import type { Prize, AddPrizeRequest, UpdatePrizeRequest, GachaResultLogEntry } from '../types';
 
 /**
  * 景品管理サービス
@@ -207,7 +207,7 @@ export class PrizeService {
    * @param id 景品のID
    * @throws {Error} 景品が見つからない場合
    */
-  async decrementStock(id: string): Promise<void> {
+  async decrementStock(id: string): Promise<number> {
     const currentPrizes = prizesStore.prizes;
     const targetIndex = currentPrizes.findIndex((p) => p.id === id);
 
@@ -232,7 +232,19 @@ export class PrizeService {
     // バックエンドに保存
     if (config.isGoogleSheetsEnabled) {
       try {
-        await this.sheetsService!.decrementStock(id);
+        const remoteStock = await this.sheetsService!.decrementStock(id);
+
+        if (remoteStock !== newStock) {
+          const syncedPrize: Prize = {
+            ...updatedPrize,
+            stock: remoteStock,
+          };
+          const syncedPrizes = [...updatedPrizes];
+          syncedPrizes[targetIndex] = syncedPrize;
+          prizesStore.setPrizes(syncedPrizes);
+        }
+
+        return remoteStock;
       } catch (error) {
         console.error('Failed to decrement stock in Google Sheets:', error);
         prizesStore.setPrizes(currentPrizes);
@@ -240,6 +252,19 @@ export class PrizeService {
       }
     } else {
       this.savePrizes(updatedPrizes);
+      return newStock;
+    }
+  }
+
+  async logGachaResult(entry: GachaResultLogEntry): Promise<void> {
+    if (!config.isGoogleSheetsEnabled || !this.sheetsService) {
+      return;
+    }
+
+    try {
+      await this.sheetsService.logGachaResult(entry);
+    } catch (error) {
+      console.error('Failed to log gacha result to Google Sheets:', error);
     }
   }
 

@@ -22,8 +22,11 @@
  */
 
 // 設定
-const SHEET_NAME = 'シート1'; // スプレッドシートのシート名
+const SHEET_NAME = '景品マスタ'; // スプレッドシートのシート名
 const HEADER_ROW = 1; // ヘッダー行番号
+const RESULT_SHEET_NAME = 'ガチャ結果'; // ガチャ結果を記録するシート名
+const RESULT_HEADER_ROW = 1;
+const RESULT_HEADERS = ['景品', '引いた時間', '該当景品の残りの個数'];
 
 /**
  * JSONレスポンスを生成
@@ -101,6 +104,8 @@ function doPost(e) {
         return handleDelete(requestData.id);
       case 'decrement':
         return handleDecrement(requestData.id);
+      case 'logResult':
+        return handleLogResult(requestData.data);
       default:
         return createJsonResponse({ error: '不明なアクションです' });
     }
@@ -258,6 +263,38 @@ function handleDecrement(id) {
   sheet.getRange(targetRow, 4).setValue(newStock);
 
   return createJsonResponse({ success: true, newStock });
+}
+
+/**
+ * ガチャ結果を記録
+ */
+function handleLogResult(data) {
+  const sheet = getOrCreateResultSheet();
+
+  const prizeName = data && data.prizeName ? data.prizeName : '';
+  const drawnAt = data && data.drawnAt ? new Date(Number(data.drawnAt)) : new Date();
+  const remainingStock = data && data.remainingStock !== undefined && data.remainingStock !== null
+    ? Number(data.remainingStock)
+    : '';
+
+  sheet.appendRow([prizeName, drawnAt, remainingStock]);
+
+  return createJsonResponse({ success: true });
+}
+
+function getOrCreateResultSheet() {
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = spreadsheet.getSheetByName(RESULT_SHEET_NAME);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(RESULT_SHEET_NAME);
+  }
+
+  if (sheet.getLastRow() < RESULT_HEADER_ROW) {
+    sheet.appendRow(RESULT_HEADERS);
+  }
+
+  return sheet;
 }
 
 function getNextOrder(sheet) {

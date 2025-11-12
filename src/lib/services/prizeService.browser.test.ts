@@ -457,10 +457,11 @@ describe('PrizeService', () => {
         stock: 5,
       });
 
-      await prizeService.decrementStock(prize.id);
+      const remaining = await prizeService.decrementStock(prize.id);
 
       const updated = prizesStore.prizes.find((p) => p.id === prize.id);
       expect(updated?.stock).toBe(4);
+      expect(remaining).toBe(4);
     });
 
     it('should not decrease stock below 0', async () => {
@@ -470,11 +471,13 @@ describe('PrizeService', () => {
         stock: 1,
       });
 
-      await prizeService.decrementStock(prize.id);
-      await prizeService.decrementStock(prize.id); // 2回目
+      const first = await prizeService.decrementStock(prize.id);
+      const second = await prizeService.decrementStock(prize.id); // 2回目
 
       const updated = prizesStore.prizes.find((p) => p.id === prize.id);
       expect(updated?.stock).toBe(0);
+      expect(first).toBe(0);
+      expect(second).toBe(0);
     });
 
     it('should save to localStorage after decrementing', async () => {

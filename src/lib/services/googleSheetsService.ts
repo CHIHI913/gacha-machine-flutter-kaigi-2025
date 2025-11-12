@@ -1,4 +1,4 @@
-import type { Prize } from '../types';
+import type { Prize, GachaResultLogEntry } from '../types';
 import { GoogleSheetsError, toGoogleSheetsErrorCategory } from '../errors/googleSheetsError';
 
 /**
@@ -227,6 +227,40 @@ export class GoogleSheetsService {
     } catch (error) {
       console.error('Failed to decrement stock in Google Sheets:', error);
       throw new Error('スプレッドシートの在庫減少に失敗しました');
+    }
+  }
+
+  /**
+   * ガチャ結果を「ガチャ結果」シートに記録
+   */
+  async logGachaResult(entry: GachaResultLogEntry): Promise<void> {
+    try {
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        mode: 'cors',
+        credentials: 'omit',
+        body: JSON.stringify({
+          action: 'logResult',
+          data: entry,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data: GoogleSheetsResponse = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (!data.success) {
+        throw new Error('ガチャ結果の記録に失敗しました');
+      }
+    } catch (error) {
+      console.error('Failed to log gacha result to Google Sheets:', error);
+      throw new Error('スプレッドシートへのガチャ結果記録に失敗しました');
     }
   }
 
