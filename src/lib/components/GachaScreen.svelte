@@ -280,7 +280,6 @@
     justify-content: center;
     background-color: var(--color-bg-white, #ffffff);
     border: 3px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 20px 40px rgba(21, 21, 26, 0.15);
   }
 
   .gacha-hero-image {

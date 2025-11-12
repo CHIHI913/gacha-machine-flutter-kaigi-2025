@@ -72,10 +72,10 @@
             </div>
 
             <div class="prize-info">
-              <span class="probability">{info.probability}%</span>
               <span class="stock">
-                残り{info.prize.stock} / {info.prize.totalStock ?? info.prize.stock}個
+                {info.prize.stock}/{info.prize.totalStock ?? info.prize.stock}個
               </span>
+              <span class="probability">{info.probability}%</span>
               {#if info.isLowStock && info.prize.stock > 0}
                 <span class="low-stock-warning">残りわずか</span>
               {/if}
@@ -137,9 +137,11 @@
   }
 
   .prize-name {
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-high, #15151a);
     flex: 1;
+    font-size: 1.05rem;
+    line-height: 1.3;
   }
 
   .prize-info {
@@ -157,7 +159,8 @@
   }
 
   .stock {
-    color: var(--text-middle, #8d9099);
+    color: var(--text-high, #15151a);
+    font-weight: 600;
   }
 
   .low-stock-warning {

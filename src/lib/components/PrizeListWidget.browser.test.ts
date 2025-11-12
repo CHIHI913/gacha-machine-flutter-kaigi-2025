@@ -81,7 +81,7 @@ describe('PrizeListWidget', () => {
       prizesStore.setPrizes(prizes);
       render(PrizeListWidget, { props: { mode: 'compact' } });
 
-      expect(screen.getByText(/残り5\s*\/\s*5個/)).toBeTruthy();
+      expect(screen.getByText(/5\s*\/\s*5個/)).toBeTruthy();
     });
 
     it('should show low stock warning when remaining stock is 10% or less of total', () => {

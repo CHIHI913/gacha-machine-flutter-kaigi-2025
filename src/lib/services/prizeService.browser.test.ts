@@ -40,14 +40,14 @@ describe('PrizeService', () => {
   });
 
   describe('addPrize', () => {
-    it('should add a prize with generated ID and createdAt', () => {
+    it('should add a prize with generated ID and createdAt', async () => {
       const request: AddPrizeRequest = {
         name: 'New Prize',
         imageUrl: '/new.png',
         stock: 10,
       };
 
-      const result = prizeService.addPrize(request);
+      const result = await prizeService.addPrize(request);
 
       expect(result.id).toBeDefined();
       expect(result.id.length).toBeGreaterThan(0);
@@ -58,28 +58,28 @@ describe('PrizeService', () => {
       expect(typeof result.createdAt).toBe('number');
     });
 
-    it('should add prize to store', () => {
+    it('should add prize to store', async () => {
       const request: AddPrizeRequest = {
         name: 'New Prize',
         imageUrl: '/new.png',
         stock: 10,
       };
 
-      prizeService.addPrize(request);
+      await prizeService.addPrize(request);
 
       const prizes = prizesStore.prizes;
       expect(prizes.length).toBe(1);
       expect(prizes[0].name).toBe('New Prize');
     });
 
-    it('should save to localStorage after adding', () => {
+    it('should save to localStorage after adding', async () => {
       const request: AddPrizeRequest = {
         name: 'New Prize',
         imageUrl: '/new.png',
         stock: 10,
       };
 
-      prizeService.addPrize(request);
+      await prizeService.addPrize(request);
 
       const saved = localStorage.getItem('prizes');
       expect(saved).toBeDefined();
@@ -88,7 +88,7 @@ describe('PrizeService', () => {
       expect(parsed[0].name).toBe('New Prize');
     });
 
-    it('should generate unique IDs for multiple prizes', () => {
+    it('should generate unique IDs for multiple prizes', async () => {
       const request1: AddPrizeRequest = {
         name: 'Prize 1',
         imageUrl: '/1.png',
@@ -100,13 +100,13 @@ describe('PrizeService', () => {
         stock: 3,
       };
 
-      const prize1 = prizeService.addPrize(request1);
-      const prize2 = prizeService.addPrize(request2);
+      const prize1 = await prizeService.addPrize(request1);
+      const prize2 = await prizeService.addPrize(request2);
 
       expect(prize1.id).not.toBe(prize2.id);
     });
 
-    it('should add prize with description field', () => {
+    it('should add prize with description field', async () => {
       const request: AddPrizeRequest = {
         name: 'Prize with Description',
         imageUrl: '/prize.png',
@@ -114,24 +114,24 @@ describe('PrizeService', () => {
         description: 'This is a test prize description',
       };
 
-      const result = prizeService.addPrize(request);
+      const result = await prizeService.addPrize(request);
 
       expect(result.description).toBe('This is a test prize description');
     });
 
-    it('should add prize without description field', () => {
+    it('should add prize without description field', async () => {
       const request: AddPrizeRequest = {
         name: 'Prize without Description',
         imageUrl: '/prize.png',
         stock: 5,
       };
 
-      const result = prizeService.addPrize(request);
+      const result = await prizeService.addPrize(request);
 
       expect(result.description).toBeUndefined();
     });
 
-    it('should save prize with description to localStorage', () => {
+    it('should save prize with description to localStorage', async () => {
       const request: AddPrizeRequest = {
         name: 'Prize',
         imageUrl: '/prize.png',
@@ -139,7 +139,7 @@ describe('PrizeService', () => {
         description: 'Test description',
       };
 
-      prizeService.addPrize(request);
+      await prizeService.addPrize(request);
 
       const saved = localStorage.getItem('prizes');
       const parsed = JSON.parse(saved!);
@@ -148,8 +148,8 @@ describe('PrizeService', () => {
   });
 
   describe('updatePrize', () => {
-    it('should update prize name', () => {
-      const prize = prizeService.addPrize({
+    it('should update prize name', async () => {
+      const prize = await prizeService.addPrize({
         name: 'Old Name',
         imageUrl: '/old.png',
         stock: 5,
@@ -160,7 +160,7 @@ describe('PrizeService', () => {
         name: 'New Name',
       };
 
-      prizeService.updatePrize(request);
+      await prizeService.updatePrize(request);
 
       const updated = prizesStore.prizes.find((p) => p.id === prize.id);
       expect(updated?.name).toBe('New Name');
@@ -168,8 +168,8 @@ describe('PrizeService', () => {
       expect(updated?.stock).toBe(5); // 変更されていないことを確認
     });
 
-    it('should update prize imageUrl', () => {
-      const prize = prizeService.addPrize({
+    it('should update prize imageUrl', async () => {
+      const prize = await prizeService.addPrize({
         name: 'Prize',
         imageUrl: '/old.png',
         stock: 5,
@@ -180,14 +180,14 @@ describe('PrizeService', () => {
         imageUrl: '/new.png',
       };
 
-      prizeService.updatePrize(request);
+      await prizeService.updatePrize(request);
 
       const updated = prizesStore.prizes.find((p) => p.id === prize.id);
       expect(updated?.imageUrl).toBe('/new.png');
     });
 
-    it('should update prize stock', () => {
-      const prize = prizeService.addPrize({
+    it('should update prize stock', async () => {
+      const prize = await prizeService.addPrize({
         name: 'Prize',
         imageUrl: '/prize.png',
         stock: 5,
@@ -198,14 +198,14 @@ describe('PrizeService', () => {
         stock: 10,
       };
 
-      prizeService.updatePrize(request);
+      await prizeService.updatePrize(request);
 
       const updated = prizesStore.prizes.find((p) => p.id === prize.id);
       expect(updated?.stock).toBe(10);
     });
 
-    it('should update multiple fields at once', () => {
-      const prize = prizeService.addPrize({
+    it('should update multiple fields at once', async () => {
+      const prize = await prizeService.addPrize({
         name: 'Old Prize',
         imageUrl: '/old.png',
         stock: 5,
@@ -218,7 +218,7 @@ describe('PrizeService', () => {
         stock: 20,
       };
 
-      prizeService.updatePrize(request);
+      await prizeService.updatePrize(request);
 
       const updated = prizesStore.prizes.find((p) => p.id === prize.id);
       expect(updated?.name).toBe('New Prize');
@@ -226,8 +226,8 @@ describe('PrizeService', () => {
       expect(updated?.stock).toBe(20);
     });
 
-    it('should save to localStorage after updating', () => {
-      const prize = prizeService.addPrize({
+    it('should save to localStorage after updating', async () => {
+      const prize = await prizeService.addPrize({
         name: 'Prize',
         imageUrl: '/prize.png',
         stock: 5,
@@ -238,26 +238,26 @@ describe('PrizeService', () => {
         name: 'Updated Prize',
       };
 
-      prizeService.updatePrize(request);
+      await prizeService.updatePrize(request);
 
       const saved = localStorage.getItem('prizes');
       const parsed = JSON.parse(saved!);
       expect(parsed[0].name).toBe('Updated Prize');
     });
 
-    it('should throw error when prize not found', () => {
+    it('should throw error when prize not found', async () => {
       const request: UpdatePrizeRequest = {
         id: 'non-existent-id',
         name: 'New Name',
       };
 
-      expect(() => prizeService.updatePrize(request)).toThrow(
+      await expect(prizeService.updatePrize(request)).rejects.toThrow(
         '指定された景品が見つかりません'
       );
     });
 
-    it('should update prize description', () => {
-      const prize = prizeService.addPrize({
+    it('should update prize description', async () => {
+      const prize = await prizeService.addPrize({
         name: 'Prize',
         imageUrl: '/prize.png',
         stock: 5,
@@ -269,15 +269,15 @@ describe('PrizeService', () => {
         description: 'New description',
       };
 
-      prizeService.updatePrize(request);
+      await prizeService.updatePrize(request);
 
       const updated = prizesStore.prizes.find((p) => p.id === prize.id);
       expect(updated?.description).toBe('New description');
       expect(updated?.name).toBe('Prize'); // 変更されていないことを確認
     });
 
-    it('should update prize and add description to prize without one', () => {
-      const prize = prizeService.addPrize({
+    it('should update prize and add description to prize without one', async () => {
+      const prize = await prizeService.addPrize({
         name: 'Prize',
         imageUrl: '/prize.png',
         stock: 5,
@@ -288,14 +288,14 @@ describe('PrizeService', () => {
         description: 'Added description',
       };
 
-      prizeService.updatePrize(request);
+      await prizeService.updatePrize(request);
 
       const updated = prizesStore.prizes.find((p) => p.id === prize.id);
       expect(updated?.description).toBe('Added description');
     });
 
-    it('should save updated description to localStorage', () => {
-      const prize = prizeService.addPrize({
+    it('should save updated description to localStorage', async () => {
+      const prize = await prizeService.addPrize({
         name: 'Prize',
         imageUrl: '/prize.png',
         stock: 5,
@@ -306,7 +306,7 @@ describe('PrizeService', () => {
         description: 'Updated description',
       };
 
-      prizeService.updatePrize(request);
+      await prizeService.updatePrize(request);
 
       const saved = localStorage.getItem('prizes');
       const parsed = JSON.parse(saved!);
@@ -315,52 +315,52 @@ describe('PrizeService', () => {
   });
 
   describe('deletePrize', () => {
-    it('should delete prize from store', () => {
-      const prize = prizeService.addPrize({
+    it('should delete prize from store', async () => {
+      const prize = await prizeService.addPrize({
         name: 'Prize to Delete',
         imageUrl: '/delete.png',
         stock: 5,
       });
 
-      prizeService.deletePrize(prize.id);
+      await prizeService.deletePrize(prize.id);
 
       const prizes = prizesStore.prizes;
       expect(prizes.length).toBe(0);
     });
 
-    it('should save to localStorage after deleting', () => {
-      const prize = prizeService.addPrize({
+    it('should save to localStorage after deleting', async () => {
+      const prize = await prizeService.addPrize({
         name: 'Prize',
         imageUrl: '/prize.png',
         stock: 5,
       });
 
-      prizeService.deletePrize(prize.id);
+      await prizeService.deletePrize(prize.id);
 
       const saved = localStorage.getItem('prizes');
       const parsed = JSON.parse(saved!);
       expect(parsed.length).toBe(0);
     });
 
-    it('should throw error when prize not found', () => {
-      expect(() => prizeService.deletePrize('non-existent-id')).toThrow(
+    it('should throw error when prize not found', async () => {
+      await expect(prizeService.deletePrize('non-existent-id')).rejects.toThrow(
         '指定された景品が見つかりません'
       );
     });
 
-    it('should only delete specified prize', () => {
-      const prize1 = prizeService.addPrize({
+    it('should only delete specified prize', async () => {
+      const prize1 = await prizeService.addPrize({
         name: 'Prize 1',
         imageUrl: '/1.png',
         stock: 5,
       });
-      const prize2 = prizeService.addPrize({
+      const prize2 = await prizeService.addPrize({
         name: 'Prize 2',
         imageUrl: '/2.png',
         stock: 3,
       });
 
-      prizeService.deletePrize(prize1.id);
+      await prizeService.deletePrize(prize1.id);
 
       const prizes = prizesStore.prizes;
       expect(prizes.length).toBe(1);
@@ -374,13 +374,13 @@ describe('PrizeService', () => {
       expect(result).toBeNull();
     });
 
-    it('should return null when all prizes have 0 stock', () => {
-      prizeService.addPrize({
+    it('should return null when all prizes have 0 stock', async () => {
+      await prizeService.addPrize({
         name: 'Prize A',
         imageUrl: '/a.png',
         stock: 0,
       });
-      prizeService.addPrize({
+      await prizeService.addPrize({
         name: 'Prize B',
         imageUrl: '/b.png',
         stock: 0,
@@ -390,8 +390,8 @@ describe('PrizeService', () => {
       expect(result).toBeNull();
     });
 
-    it('should return a prize when prizes with stock are available', () => {
-      prizeService.addPrize({
+    it('should return a prize when prizes with stock are available', async () => {
+      await prizeService.addPrize({
         name: 'Prize A',
         imageUrl: '/a.png',
         stock: 5,
@@ -402,13 +402,13 @@ describe('PrizeService', () => {
       expect(result?.name).toBe('Prize A');
     });
 
-    it('should only draw from prizes with stock > 0', () => {
-      prizeService.addPrize({
+    it('should only draw from prizes with stock > 0', async () => {
+      await prizeService.addPrize({
         name: 'Prize A',
         imageUrl: '/a.png',
         stock: 0,
       });
-      const prizeB = prizeService.addPrize({
+      const prizeB = await prizeService.addPrize({
         name: 'Prize B',
         imageUrl: '/b.png',
         stock: 1,
@@ -418,18 +418,18 @@ describe('PrizeService', () => {
       expect(result?.id).toBe(prizeB.id);
     });
 
-    it('should randomly select from multiple available prizes', () => {
-      prizeService.addPrize({
+    it('should randomly select from multiple available prizes', async () => {
+      await prizeService.addPrize({
         name: 'Prize A',
         imageUrl: '/a.png',
         stock: 5,
       });
-      prizeService.addPrize({
+      await prizeService.addPrize({
         name: 'Prize B',
         imageUrl: '/b.png',
         stock: 5,
       });
-      prizeService.addPrize({
+      await prizeService.addPrize({
         name: 'Prize C',
         imageUrl: '/c.png',
         stock: 5,
@@ -450,56 +450,56 @@ describe('PrizeService', () => {
   });
 
   describe('decrementStock', () => {
-    it('should decrease prize stock by 1', () => {
-      const prize = prizeService.addPrize({
+    it('should decrease prize stock by 1', async () => {
+      const prize = await prizeService.addPrize({
         name: 'Prize',
         imageUrl: '/prize.png',
         stock: 5,
       });
 
-      prizeService.decrementStock(prize.id);
+      await prizeService.decrementStock(prize.id);
 
       const updated = prizesStore.prizes.find((p) => p.id === prize.id);
       expect(updated?.stock).toBe(4);
     });
 
-    it('should not decrease stock below 0', () => {
-      const prize = prizeService.addPrize({
+    it('should not decrease stock below 0', async () => {
+      const prize = await prizeService.addPrize({
         name: 'Prize',
         imageUrl: '/prize.png',
         stock: 1,
       });
 
-      prizeService.decrementStock(prize.id);
-      prizeService.decrementStock(prize.id); // 2回目
+      await prizeService.decrementStock(prize.id);
+      await prizeService.decrementStock(prize.id); // 2回目
 
       const updated = prizesStore.prizes.find((p) => p.id === prize.id);
       expect(updated?.stock).toBe(0);
     });
 
-    it('should save to localStorage after decrementing', () => {
-      const prize = prizeService.addPrize({
+    it('should save to localStorage after decrementing', async () => {
+      const prize = await prizeService.addPrize({
         name: 'Prize',
         imageUrl: '/prize.png',
         stock: 5,
       });
 
-      prizeService.decrementStock(prize.id);
+      await prizeService.decrementStock(prize.id);
 
       const saved = localStorage.getItem('prizes');
       const parsed = JSON.parse(saved!);
       expect(parsed[0].stock).toBe(4);
     });
 
-    it('should throw error when prize not found', () => {
-      expect(() => prizeService.decrementStock('non-existent-id')).toThrow(
+    it('should throw error when prize not found', async () => {
+      await expect(prizeService.decrementStock('non-existent-id')).rejects.toThrow(
         '指定された景品が見つかりません'
       );
     });
   });
 
   describe('loadPrizes', () => {
-    it('should load prizes from localStorage', () => {
+    it('should load prizes from localStorage', async () => {
       const testPrizes: Prize[] = [
         {
           id: '1',
@@ -512,23 +512,23 @@ describe('PrizeService', () => {
 
       localStorage.setItem('prizes', JSON.stringify(testPrizes));
 
-      prizeService.loadPrizes();
+      await prizeService.loadPrizes();
 
       const prizes = prizesStore.prizes;
       expect(prizes).toEqual(testPrizes);
     });
 
-    it('should handle empty localStorage', () => {
-      prizeService.loadPrizes();
+    it('should handle empty localStorage', async () => {
+      await prizeService.loadPrizes();
 
       const prizes = prizesStore.prizes;
       expect(prizes).toEqual([]);
     });
 
-    it('should handle corrupted data gracefully', () => {
+    it('should handle corrupted data gracefully', async () => {
       localStorage.setItem('prizes', 'invalid json');
 
-      prizeService.loadPrizes();
+      await prizeService.loadPrizes();
 
       const prizes = prizesStore.prizes;
       expect(prizes).toEqual([]);
