@@ -5,10 +5,11 @@
 
 export type DataSourceType = 'local' | 'sheets';
 
-const STORAGE_KEY = 'dataSource';
+const STORAGE_KEY = 'gachaDataSource';
+const LEGACY_STORAGE_KEY = 'dataSource';
 
 class DataSourceStore {
-  private _dataSource = $state<DataSourceType>('local');
+  private _dataSource = $state<DataSourceType>('sheets');
 
   constructor() {
     // LocalStorageから設定を読み込む
@@ -43,6 +44,13 @@ class DataSourceStore {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored === 'local' || stored === 'sheets') {
         this._dataSource = stored;
+        return;
+      }
+
+      // 旧キーの設定は無効化し、デフォルト(=sheets)へ移行
+      if (localStorage.getItem(LEGACY_STORAGE_KEY) !== null) {
+        localStorage.removeItem(LEGACY_STORAGE_KEY);
+        this.saveToStorage();
       }
     } catch (error) {
       console.error('Failed to load data source setting:', error);

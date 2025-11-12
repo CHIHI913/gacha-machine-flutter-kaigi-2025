@@ -295,10 +295,24 @@ function getNextOrderValue() {
       <button
         class="add-prize-button"
         data-testid="add-prize-button"
-        onclick={openAddForm}
+        onclick={() => {
+          if (dataSourceStore.dataSource === 'sheets') {
+            return;
+          }
+          openAddForm();
+        }}
+        disabled={dataSourceStore.dataSource === 'sheets'}
+        title={dataSourceStore.dataSource === 'sheets'
+          ? 'スプレッドシート利用時はシート側で景品を管理してください'
+          : undefined}
       >
         + 景品を追加
       </button>
+      {#if dataSourceStore.dataSource === 'sheets'}
+        <p class="add-button-helper">
+          スプレッドシート連携中はシート側で景品を追加してください。
+        </p>
+      {/if}
     </div>
 
     <!-- 景品リスト -->
@@ -591,6 +605,17 @@ function getNextOrderValue() {
 
   .add-prize-button:hover {
     opacity: 0.9;
+  }
+
+  .add-prize-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .add-button-helper {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--color-text-middle);
   }
 
   .empty-message {
