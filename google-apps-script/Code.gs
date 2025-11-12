@@ -17,7 +17,8 @@
  * D列: 在庫（残数）
  * E列: 仕入れ総数（分母）
  * F列: 説明
- * G列: 作成日時（タイムスタンプ）
+ * G列: 順番
+ * H列: 作成日時（タイムスタンプ）
  */
 
 // 設定
@@ -61,7 +62,7 @@ function doGet() {
     }
 
     // データ取得（ヘッダーを除く）
-    const range = sheet.getRange(HEADER_ROW + 1, 1, lastRow - HEADER_ROW, 7);
+    const range = sheet.getRange(HEADER_ROW + 1, 1, lastRow - HEADER_ROW, 8);
     const values = range.getValues();
 
     const prizes = values
@@ -73,7 +74,8 @@ function doGet() {
         stock: Number(row[3]) || 0,
         totalStock: Number(row[4]) || Number(row[3]) || 0,
         description: row[5] || undefined,
-        createdAt: row[6] ? new Date(row[6]).getTime() : Date.now()
+        order: Number(row[6]) || 0,
+        createdAt: row[7] ? new Date(row[7]).getTime() : Date.now()
       }));
 
     return createJsonResponse({ prizes });
@@ -124,6 +126,7 @@ function handleAdd(data) {
     data.stock,
     data.totalStock !== undefined ? data.totalStock : data.stock,
     data.description || '',
+    data.order !== undefined ? data.order : getNextOrder(sheet),
     new Date(data.createdAt)
   ];
 
@@ -137,6 +140,7 @@ function handleAdd(data) {
       imageUrl: data.imageUrl,
       stock: data.stock,
       totalStock: data.totalStock !== undefined ? data.totalStock : data.stock,
+      order: data.order !== undefined ? data.order : getNextOrder(sheet),
       description: data.description,
       createdAt: data.createdAt
     }
@@ -170,7 +174,7 @@ function handleUpdate(data) {
   }
 
   // 既存データを取得
-  const existingData = sheet.getRange(targetRow, 1, 1, 7).getValues()[0];
+  const existingData = sheet.getRange(targetRow, 1, 1, 8).getValues()[0];
 
   // 更新（undefinedの場合は既存値を保持）
   sheet.getRange(targetRow, 2).setValue(data.name !== undefined ? data.name : existingData[1]);
@@ -181,6 +185,9 @@ function handleUpdate(data) {
   );
   sheet.getRange(targetRow, 6).setValue(
     data.description !== undefined ? data.description : existingData[5]
+  );
+  sheet.getRange(targetRow, 7).setValue(
+    data.order !== undefined ? data.order : existingData[6]
   );
 
   return createJsonResponse({ success: true });
@@ -251,4 +258,19 @@ function handleDecrement(id) {
   sheet.getRange(targetRow, 4).setValue(newStock);
 
   return createJsonResponse({ success: true, newStock });
+}
+
+function getNextOrder(sheet) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= HEADER_ROW) {
+    return 1;
+  }
+  const orderColumn = sheet.getRange(HEADER_ROW + 1, 7, lastRow - HEADER_ROW, 1).getValues();
+  const orders = orderColumn
+    .map((row) => Number(row[0]))
+    .filter((value) => !isNaN(value) && value !== null);
+  if (orders.length === 0) {
+    return 1;
+  }
+  return Math.max.apply(null, orders) + 1;
 }

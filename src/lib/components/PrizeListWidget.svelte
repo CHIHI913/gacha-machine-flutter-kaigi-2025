@@ -58,29 +58,35 @@
           role="button"
           tabindex="0"
         >
-          <div class="prize-header">
-            <span
-              class="rarity-icon"
-              style="color: {rarityClassifier.getColor(info.rarity)}"
-            >
-              {rarityClassifier.getIcon(info.rarity)}
-            </span>
-            <span class="prize-name">{info.prize.name}</span>
+          <div class="prize-column image">
+            <div class="thumbnail">
+              {#if info.prize.imageUrl}
+                <img src={info.prize.imageUrl} alt={info.prize.name} loading="lazy" />
+              {:else}
+                <div class="thumbnail-placeholder">No Image</div>
+              {/if}
+            </div>
           </div>
 
-          <div class="prize-info">
-            <span class="probability">{info.probability}%</span>
-            <span class="stock">
-              残り{info.prize.stock} / {info.prize.totalStock ?? info.prize.stock}個
-            </span>
-            {#if info.isLowStock && info.prize.stock > 0}
-              <span class="low-stock-warning">残りわずか</span>
+          <div class="prize-column meta">
+            <div class="prize-header">
+              <span class="prize-name">{info.prize.name}</span>
+            </div>
+
+            <div class="prize-info">
+              <span class="probability">{info.probability}%</span>
+              <span class="stock">
+                残り{info.prize.stock} / {info.prize.totalStock ?? info.prize.stock}個
+              </span>
+              {#if info.isLowStock && info.prize.stock > 0}
+                <span class="low-stock-warning">残りわずか</span>
+              {/if}
+            </div>
+
+            {#if mode === 'detailed' && info.prize.description}
+              <div class="prize-description">{info.prize.description}</div>
             {/if}
           </div>
-
-          {#if mode === 'detailed' && info.prize.description}
-            <div class="prize-description">{info.prize.description}</div>
-          {/if}
         </div>
       {/each}
     </div>
@@ -107,39 +113,29 @@
 
   .prize-list-compact,
   .prize-list-detailed {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
   }
 
   .prize-item {
-    padding: 1rem;
+    display: flex;
+    flex-direction: column;
     background: var(--bg-white, #ffffff);
     border: 1px solid var(--border-low, #e1e1e5);
-    border-radius: 8px;
+    border-radius: 16px;
+    overflow: hidden;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
 
   .prize-item:hover {
-    background: var(--highlight, #f0f0f2);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
   }
 
   .prize-item.out-of-stock {
-    opacity: 0.5;
-    background: var(--bg-middle, #e1e1e5);
-  }
-
-  .prize-header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .rarity-icon {
-    font-size: 1.2rem;
-    line-height: 1;
+    opacity: 0.7;
   }
 
   .prize-name {
@@ -150,10 +146,11 @@
 
   .prize-info {
     display: flex;
-    align-items: center;
-    gap: 1rem;
+    flex-direction: column;
+    gap: 0.25rem;
     font-size: 0.875rem;
     color: var(--text-middle, #8d9099);
+    padding-bottom: 0.45rem;
   }
 
   .probability {
@@ -172,11 +169,57 @@
   }
 
   .prize-description {
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--border-low, #e1e1e5);
-    font-size: 0.875rem;
+    margin: 0;
+    padding-top: 0.5rem;
+    font-size: 0.85rem;
     color: var(--text-middle, #8d9099);
-    line-height: 1.5;
+    line-height: 1.4;
+  }
+
+  .thumbnail {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: var(--bg-middle, #e1e1e5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .thumbnail-placeholder {
+    font-size: 0.75rem;
+    color: var(--text-middle, #8d9099);
+  }
+
+.prize-column.image {
+  width: 100%;
+  background: var(--bg-middle, #e1e1e5);
+}
+
+.prize-column.meta {
+  padding: 1rem 1.1rem 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+}
+  .prize-header {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  @media (min-width: 640px) {
+    .prize-info {
+      flex-direction: row;
+      align-items: center;
+      gap: 1rem;
+    }
   }
 </style>

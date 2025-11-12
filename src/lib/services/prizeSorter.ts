@@ -28,6 +28,10 @@ export class PrizeSorter {
       let comparison = 0;
 
       switch (sortBy) {
+        case 'order':
+          comparison = (a.prize.order ?? Infinity) - (b.prize.order ?? Infinity);
+          break;
+
         case 'probability':
           comparison = a.probability - b.probability;
           break;

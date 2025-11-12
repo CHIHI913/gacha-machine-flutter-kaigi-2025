@@ -61,6 +61,7 @@ npm run preview
 
 1. `.env.example` をコピーして `.env` を作成
 2. スプレッドシートのセットアップ（[GOOGLE_SHEETS_SETUP.md](./GOOGLE_SHEETS_SETUP.md) 参照）
+   - 列構成は `ID / 名前 / 画像URL / 在庫 / 仕入れ総数 / 説明 / 順番 / 作成日時`。`順番`列が小さいほどアプリ内で左側に表示されます。
 3. `.env` に以下を設定：
 
 ```env

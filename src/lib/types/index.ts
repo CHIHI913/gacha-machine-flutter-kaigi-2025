@@ -21,6 +21,9 @@ export interface Prize {
   /** 仕入れ総数（分母） */
   totalStock?: number;
 
+  /** 表示順（小さいほど左側） */
+  order?: number;
+
   /** 作成日時（UNIXタイムスタンプ） */
   createdAt: number;
 
@@ -51,6 +54,7 @@ export interface AddPrizeRequest {
   imageUrl: string;
   stock: number;
   totalStock?: number;
+  order?: number;
   description?: string;
 }
 
@@ -63,6 +67,7 @@ export interface UpdatePrizeRequest {
   imageUrl?: string;
   stock?: number;
   totalStock?: number;
+  order?: number;
   description?: string;
 }
 

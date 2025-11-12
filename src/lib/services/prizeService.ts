@@ -39,6 +39,7 @@ export class PrizeService {
   async addPrize(request: AddPrizeRequest): Promise<Prize> {
     const totalStock = request.totalStock ?? request.stock;
     const normalizedStock = Math.min(request.stock, totalStock);
+    const order = request.order ?? this.getNextOrder();
 
     const newPrize: Prize = this.normalizePrize({
       id: nanoid(),
@@ -46,6 +47,7 @@ export class PrizeService {
       imageUrl: request.imageUrl,
       stock: normalizedStock,
       totalStock,
+      order,
       createdAt: Date.now(),
       ...(request.description !== undefined && { description: request.description }),
     });
@@ -90,6 +92,7 @@ export class PrizeService {
     const nextTotalStock = request.totalStock ?? target.totalStock ?? target.stock;
     const requestedStock = request.stock ?? target.stock;
     const clampedStock = Math.min(requestedStock, nextTotalStock);
+    const nextOrder = request.order ?? target.order ?? targetIndex + 1;
 
     const updatedPrize: Prize = this.normalizePrize({
       ...target,
@@ -97,6 +100,7 @@ export class PrizeService {
       ...(request.imageUrl !== undefined && { imageUrl: request.imageUrl }),
       stock: clampedStock,
       totalStock: nextTotalStock,
+      order: nextOrder,
       ...(request.description !== undefined && { description: request.description }),
     });
 
@@ -254,11 +258,25 @@ export class PrizeService {
   private normalizePrize(prize: Prize): Prize {
     const totalStock = prize.totalStock ?? prize.stock;
     const stock = Math.min(prize.stock, totalStock);
+    const createdAt = prize.createdAt ?? Date.now();
+    const orderValue = prize.order ?? createdAt;
+    const order = typeof orderValue === 'number' ? orderValue : Number(orderValue) || createdAt;
 
     return {
       ...prize,
       stock,
       totalStock,
+      createdAt,
+      order,
     };
   }
+
+  private getNextOrder(): number {
+    const prizes = prizesStore.prizes;
+    if (prizes.length === 0) {
+      return 1;
+    }
+    return Math.max(...prizes.map((p) => p.order ?? 0)) + 1;
+  }
+
 }

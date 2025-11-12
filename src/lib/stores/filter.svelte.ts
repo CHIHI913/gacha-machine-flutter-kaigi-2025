@@ -3,7 +3,7 @@ import type { RarityLevel } from '../types';
 /**
  * ソートフィールドの種類
  */
-export type SortBy = 'probability' | 'stock' | 'name' | 'createdAt';
+export type SortBy = 'order' | 'probability' | 'stock' | 'name' | 'createdAt';
 
 /**
  * ソート順
@@ -29,8 +29,8 @@ interface FilterState {
  * デフォルトのフィルター状態
  */
 const defaultFilterState: FilterState = {
-  sortBy: 'probability',
-  sortOrder: 'desc',
+  sortBy: 'order',
+  sortOrder: 'asc',
   rarityFilter: 'all',
   showOutOfStock: true,
 };

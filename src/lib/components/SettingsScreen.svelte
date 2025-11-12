@@ -20,6 +20,7 @@
     name: '',
     imageUrl: '',
     stock: 0,
+    order: 1,
     totalStock: 0,
     description: '',
   });
@@ -28,13 +29,19 @@
   let errors = $state({
     name: '',
     stock: '',
+    order: '',
     totalStock: '',
     description: '',
   });
 
   // 削除確認ダイアログ
-  let showDeleteConfirm = $state(false);
-  let deletingPrizeId = $state<string | null>(null);
+let showDeleteConfirm = $state(false);
+let deletingPrizeId = $state<string | null>(null);
+
+function getNextOrderValue() {
+  const orders = prizesStore.prizes.map((p) => p.order ?? 0);
+  return (orders.length ? Math.max(...orders) : 0) + 1;
+}
 
   // ガチャ画面に戻る
   function navigateToGacha() {
@@ -49,31 +56,35 @@
       name: '',
       imageUrl: '',
       stock: 0,
+      order: getNextOrderValue(),
       totalStock: 0,
       description: '',
     };
     errors = {
       name: '',
       stock: '',
+      order: '',
       totalStock: '',
       description: '',
     };
   }
 
   // 編集フォームを開く
-  function openEditForm(prize: Prize) {
+  function openEditForm(prize: Prize, index: number) {
     showForm = true;
     editingPrizeId = prize.id;
     formData = {
       name: prize.name,
       imageUrl: prize.imageUrl,
       stock: prize.stock,
+      order: prize.order ?? index + 1,
       totalStock: prize.totalStock ?? prize.stock,
       description: prize.description || '',
     };
     errors = {
       name: '',
       stock: '',
+      order: '',
       totalStock: '',
       description: '',
     };
@@ -87,12 +98,14 @@
       name: '',
       imageUrl: '',
       stock: 0,
+      order: getNextOrderValue(),
       totalStock: 0,
       description: '',
     };
     errors = {
       name: '',
       stock: '',
+      order: '',
       totalStock: '',
       description: '',
     };
@@ -104,6 +117,7 @@
     errors = {
       name: '',
       stock: '',
+      order: '',
       totalStock: '',
       description: '',
     };
@@ -141,6 +155,14 @@
       isValid = false;
     }
 
+    if (formData.order < 1) {
+      errors.order = '順番は1以上の数値を入力してください';
+      isValid = false;
+    } else if (!Number.isInteger(formData.order)) {
+      errors.order = '順番は整数で入力してください';
+      isValid = false;
+    }
+
     if (formData.description.length > 500) {
       errors.description = '説明は500文字以内で入力してください';
       isValid = false;
@@ -163,6 +185,7 @@
           name: formData.name,
           imageUrl: formData.imageUrl,
           stock: formData.stock,
+          order: formData.order,
           totalStock: formData.totalStock,
           description: formData.description.trim() || undefined,
         };
@@ -173,6 +196,7 @@
           name: formData.name,
           imageUrl: formData.imageUrl,
           stock: formData.stock,
+          order: formData.order,
           totalStock: formData.totalStock,
           description: formData.description.trim() || undefined,
         };
@@ -297,7 +321,7 @@
               <button
                 class="edit-button"
                 data-testid="edit-prize-button-{index}"
-                onclick={() => openEditForm(prize)}
+                onclick={() => openEditForm(prize, index)}
               >
                 編集
               </button>
@@ -352,6 +376,19 @@
             />
             {#if errors.stock}
               <p class="error-message">{errors.stock}</p>
+            {/if}
+          </div>
+
+          <div class="form-group">
+            <label for="order">表示順 *</label>
+            <input
+              type="number"
+              id="order"
+              bind:value={formData.order}
+            />
+            <p class="helper-text">小さい値ほど左（上）に表示されます。</p>
+            {#if errors.order}
+              <p class="error-message">{errors.order}</p>
             {/if}
           </div>
 
