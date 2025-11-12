@@ -197,9 +197,24 @@ export class PrizeService {
       return null;
     }
 
-    // ランダムに1つ選択
-    const randomIndex = Math.floor(Math.random() * availablePrizes.length);
-    return availablePrizes[randomIndex];
+    // 在庫数を重みとしたランダム抽選
+    const totalStock = availablePrizes.reduce((sum, prize) => sum + Math.max(0, prize.stock), 0);
+
+    if (totalStock <= 0) {
+      return null;
+    }
+
+    const pick = Math.random() * totalStock;
+    let cumulative = 0;
+
+    for (const prize of availablePrizes) {
+      cumulative += Math.max(0, prize.stock);
+      if (pick < cumulative) {
+        return prize;
+      }
+    }
+
+    return availablePrizes[availablePrizes.length - 1];
   }
 
   /**
